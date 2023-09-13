@@ -1,10 +1,12 @@
 use std::io::{self, Write};
 
+use crate::sql;
+
 enum CliCommand {
     Exit,
 }
 
-pub fn cli() -> io::Result<()> {
+pub fn cli() -> anyhow::Result<()> {
     loop {
         print!("db> ");
         io::stdout().flush()?;
@@ -18,8 +20,6 @@ pub fn cli() -> io::Result<()> {
 
         // Process the input
         let trimmed = buffer.trim();
-        println!("Read: {}", trimmed);
-
         if trimmed.starts_with('.') {
             // Try to parse a command
             if let Some(command) = parse_command(trimmed) {
@@ -28,13 +28,15 @@ pub fn cli() -> io::Result<()> {
                     CliCommand::Exit => break,
                 }
             } else {
-                println!(
-                    "Unrecognized command: {}",
-                    trimmed.strip_prefix('.').unwrap()
-                );
+                println!("Unrecognized command: '{}'", trimmed);
             }
-        } else {
-            println!("Unrecognized input: {}", trimmed);
+            continue;
+        }
+
+        // Interpret as SQL
+        match sql::Statement::prepare(trimmed).and_then(|stmt| stmt.execute()) {
+            Ok(_) => (),
+            Err(msg) => println!("error: {}", msg),
         }
     }
     Ok(())

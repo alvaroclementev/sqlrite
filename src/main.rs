@@ -1,8 +1,7 @@
-use std::io;
-
 mod cli;
+mod sql;
 
-fn main() -> io::Result<()> {
+fn main() -> anyhow::Result<()> {
     println!("Welcome to SQLRite");
     cli::cli()
 }
