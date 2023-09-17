@@ -1,64 +1,7 @@
-//! Module that implements a SQL compiler
-
-#![allow(dead_code)]
-
-pub enum Statement {
-    Select,
-    Insert,
-}
-
-impl Statement {
-    pub fn prepare(input: &str) -> anyhow::Result<Self> {
-        // "Lexing"
-        let mut words = input.split_whitespace().peekable();
-
-        match words.peek() {
-            Some(word) => match *word {
-                "select" => Ok(Statement::Select),
-                "insert" => Ok(Statement::Insert),
-                _ => anyhow::bail!("Unrecognized keyword at start of '{}'", input),
-            },
-            None => anyhow::bail!("Empty input"),
-        }
-    }
-
-    pub fn execute(self) -> anyhow::Result<()> {
-        match self {
-            Statement::Select => println!("executing select"),
-            Statement::Insert => println!("executing insert"),
-        }
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-enum Token<'a> {
-    // Error
-    Error,
-    // Symbols
-    Comma,
-    Semicolon,
-    // Operators
-    Equal,
-    Plus,
-    Minus,
-    // Keywords
-    Select,
-    Insert,
-    As,
-    From,
-    Where,
-    // Literals
-    Number(&'a str),
-    String(&'a str),
-    // Identifier
-    Identifier(&'a str),
-    // Eof
-    Eof,
-}
+use super::token::Token;
 
 #[derive(Clone, Debug)]
-struct Lexer<'a> {
+pub struct Lexer<'a> {
     input: &'a str,
     current_token: Token<'a>,
     next_token: Token<'a>,
@@ -66,7 +9,7 @@ struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    fn new(input: &'a str) -> Self {
+    pub fn new(input: &'a str) -> Self {
         let mut lexer = Self {
             input,
             cursor: 0,
@@ -78,12 +21,27 @@ impl<'a> Lexer<'a> {
         lexer
     }
 
+    // Advance the lexer and return the next token
     pub fn next_token(&mut self) -> Option<Token<'a>> {
+        if self.at_eof() {
+            return None;
+        }
+
         let next_token = self.advance();
         if let Token::Eof = next_token {
             None
         } else {
             Some(next_token)
+        }
+    }
+
+    // Return the next token, without advancing the lexer
+    pub fn peek_token(&mut self) -> Option<&Token<'a>> {
+        let peek_token = &self.current_token;
+        if let Token::Eof = peek_token {
+            None
+        } else {
+            Some(peek_token)
         }
     }
 
