@@ -9,23 +9,7 @@ use anyhow::Context;
 
 use crate::sql::lexer::Lexer;
 use crate::sql::token::Token;
-
-#[derive(Debug)]
-pub struct Row {
-    id: u64,
-    username: String,
-    email: String,
-}
-
-impl Row {
-    fn new(id: u64, username: String, email: String) -> Self {
-        Self {
-            id,
-            username,
-            email,
-        }
-    }
-}
+use crate::storage::Row;
 
 pub enum Statement {
     Select(SelectStatement),
